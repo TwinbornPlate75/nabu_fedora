@@ -9,9 +9,6 @@ on:
 permissions:
   packages: write
 
-env:
-  CONTAINER_IMAGE: ghcr.io/${{ github.repository_owner }}/fedora-nabu-builder:44
-
 jobs:
   build_and_push_image:
     runs-on: ubuntu-24.04-arm
@@ -29,12 +26,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Lowercase container image owner
+        id: img
+        run: |
+          OWNER="${{ github.repository_owner }}"
+          echo "image=ghcr.io/${OWNER,,}/fedora-nabu-builder:44" >> "$GITHUB_OUTPUT"
+
       - name: Build and push builder container image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./scripts/Dockerfile
           push: true
-          tags: ${{ env.CONTAINER_IMAGE }}
+          tags: ${{ steps.img.outputs.image }}
           # 关键修改：指定构建 arm64 平台
           platforms: linux/arm64
