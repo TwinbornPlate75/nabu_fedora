@@ -1,5 +1,5 @@
-# 使用官方的 Fedora 42 镜像作为基础
-FROM fedora:42
+# 使用官方的 Fedora 44 镜像作为基础
+FROM fedora:44
 
 
 # 添加 GitHub CLI 仓库，更新 dnf 缓存并安装所有需要的工具

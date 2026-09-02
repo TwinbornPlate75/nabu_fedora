@@ -10,7 +10,7 @@ permissions:
   packages: write
 
 env:
-  CONTAINER_IMAGE: ghcr.io/${{ github.repository_owner }}/fedora-nabu-builder:42
+  CONTAINER_IMAGE: ghcr.io/${{ github.repository_owner }}/fedora-nabu-builder:44
 
 jobs:
   build_and_push_image:

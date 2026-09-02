@@ -127,7 +127,7 @@ for ASSET in "${ASSETS_TO_UPLOAD[@]}"; do
 done
 
 RELEASE_NOTES=$(cat <<EOF
-Automated build of Fedora 42 for Xiaomi Pad 5 (nabu).
+Automated build of Fedora 44 for Xiaomi Pad 5 (nabu).
 
 ## Changelog
 

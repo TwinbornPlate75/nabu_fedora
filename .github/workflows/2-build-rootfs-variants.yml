@@ -16,9 +16,9 @@ on:
           - kde
           - niri
       build_version: # 自定义的输入字段名称
-        description: 'Input the build version, e.g., 43.1' # 输入字段的描述
+        description: 'Input the build version, e.g., 44.1' # 输入字段的描述
         required: true
-        default: '43.0'
+        default: '44.0'
         type: string
 
 permissions:
@@ -83,7 +83,7 @@ jobs:
   build-base:
     runs-on: ubuntu-24.04-arm
     container:
-      image: ghcr.io/${{ github.repository_owner }}/fedora-nabu-builder:42
+      image: ghcr.io/${{ github.repository_owner }}/fedora-nabu-builder:44
       options: --privileged
     outputs:
       base_rootfs_path: ${{ steps.set_path.outputs.base_rootfs_path }}
@@ -129,7 +129,7 @@ jobs:
     if: fromJson(needs.prepare-matrix.outputs.matrix)[0] != null
     runs-on: ubuntu-24.04-arm
     container:
-      image: ghcr.io/${{ github.repository_owner }}/fedora-nabu-builder:42
+      image: ghcr.io/${{ github.repository_owner }}/fedora-nabu-builder:44
       options: --privileged
     continue-on-error: true
       # 这将防止单个 variant 的失败导致整个 build-variants job 失败。
@@ -170,7 +170,7 @@ jobs:
     needs: build-variants
     if: always()
     container:
-      image: ghcr.io/${{ github.repository_owner }}/fedora-nabu-builder:42
+      image: ghcr.io/${{ github.repository_owner }}/fedora-nabu-builder:44
       options: --privileged
     permissions:
       contents: write

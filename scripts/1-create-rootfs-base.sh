@@ -15,7 +15,7 @@ set -e
 
 # 定义变量
 ROOTFS_DIR="$PWD/fedora-rootfs-base"
-RELEASEVER="43"
+RELEASEVER="44"
 ARCH="aarch64"
 
 # 发行版本号从 Workflow 获取
