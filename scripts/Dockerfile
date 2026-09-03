@@ -29,4 +29,34 @@ RUN dnf config-manager addrepo --from-repofile=https://cli.github.com/packages/r
     rpm-build \
     cpio \
     systemd-boot \
+    gcc \
+    gcc-c++ \
+    make \
+    bc \
+    bison \
+    flex \
+    openssl-devel \
+    dwarves \
+    elfutils-devel \
+    git-core \
+    hmaccalc \
+    perl-interpreter \
+    python3 \
+    python3-devel \
+    python3-pyyaml \
+    rust \
+    rust-src \
+    bindgen \
+    rustfmt \
+    clippy \
+    opencsd-devel \
+    net-tools \
+    dracut \
+    rpmdevtools \
+    createrepo_c \
+    systemd-rpm-macros \
+    patch \
+    diffutils \
+    which \
+    hostname \
     && dnf clean all

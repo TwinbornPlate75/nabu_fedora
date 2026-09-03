@@ -92,6 +92,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 实时构建 nabu RPM (jhuang6451 Copr 的 Fedora 44 为空)
+      - name: Build nabu RPMs
+        run: |
+          chmod +x ./scripts/build-nabu-rpms.sh
+          ./scripts/build-nabu-rpms.sh kernel-sm8150 xiaomi-nabu-firmware nabu-fedora-configs-core nabu-fedora-dualboot-efi
+
       - name: Create Base aarch64 rootfs
         run: |
           chmod +x ./scripts/1-create-rootfs-base.sh

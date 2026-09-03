@@ -54,6 +54,16 @@ trap umount_chroot_fs EXIT
 echo "Mounting filesystems for chroot..."
 mount_chroot_fs
 
+# 实时构建本 variant 需要的 nabu configs 包并追加到本地 repo (base 已含其它包)
+echo "Building nabu-fedora-configs-kde locally..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VARIANT_RPM_TMP="$(mktemp -d)"
+export NABU_RPM_OUT="$VARIANT_RPM_TMP/rpms-variant"
+"$SCRIPT_DIR/build-nabu-rpms.sh" nabu-fedora-configs-kde
+cp -a "$VARIANT_RPM_TMP/rpms-variant"/. "$ROOTFS_DIR/opt/nabu-rpms/"
+createrepo_c "$ROOTFS_DIR/opt/nabu-rpms"
+rm -rf "$VARIANT_RPM_TMP"
+
 # 3. 在 Chroot 环境中安装 KDE 软件包
 echo "Installing KDE Plasma desktop environment inside chroot..."
 chroot "$ROOTFS_DIR" /bin/bash <<CHROOT_SCRIPT
@@ -108,7 +118,7 @@ dnf install -y \
 echo "Installing KDE-specific config packages..."
 dnf install -y --releasever=$RELEASEVER \
     --setopt=install_weak_deps=False \
-    --repofrompath="nabu_fedora_packages,https://download.copr.fedorainfracloud.org/results/jhuang6451/nabu_fedora_packages/fedora-$RELEASEVER-$ARCH/" \
+    --repofrompath="nabu_local,file:///opt/nabu-rpms" \
     --nogpgcheck \
     nabu-fedora-configs-kde
 

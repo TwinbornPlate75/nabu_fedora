@@ -63,6 +63,22 @@ nameserver 1.1.1.1
 nameserver 1.0.0.1
 EOF
 
+# 实时构建 nabu 相关 RPM (Fedora 44 的 jhuang6451 Copr 为空, 需本地构建)
+# 若 rpms-local 已存在 (workflow 已在单独步骤构建), 则跳过构建直接使用。
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NABU_RPM_OUT="$PWD/rpms-local"
+if [ ! -f "$NABU_RPM_OUT/repodata/repomd.xml" ]; then
+    echo "Building nabu RPMs locally..."
+    "$SCRIPT_DIR/build-nabu-rpms.sh" \
+        kernel-sm8150 \
+        xiaomi-nabu-firmware \
+        nabu-fedora-configs-core \
+        nabu-fedora-dualboot-efi
+else
+    echo "Local nabu RPM repo already exists at $NABU_RPM_OUT, skipping build."
+fi
+
+
 # 3. 引导基础系统
 echo "Bootstrapping Fedora repositories for $ARCH..."
 TEMP_REPO_DIR=$(mktemp -d)
@@ -88,6 +104,11 @@ dnf install -y --installroot="$ROOTFS_DIR" --forcearch="$ARCH" \
 echo "Cleaning up temporary repository..."
 rm -rf -- "$TEMP_REPO_DIR"
 
+# 把本地构建的 RPM 拷入 rootfs，供 chroot 内 dnf 使用 (实时构建产物)
+echo "Copying locally built nabu RPMs into rootfs..."
+mkdir -p "$ROOTFS_DIR/opt/nabu-rpms"
+cp -a "$NABU_RPM_OUT"/. "$ROOTFS_DIR/opt/nabu-rpms/"
+
 # 4. 在 Chroot 环境中安装和配置
 echo "Running main installation and configuration inside chroot..."
 
@@ -111,7 +132,7 @@ dnf install -y --releasever=$RELEASEVER \
     @core
 
 dnf install -y --releasever=$RELEASEVER \
-    --repofrompath="nabu_fedora_packages,https://download.copr.fedorainfracloud.org/results/jhuang6451/nabu_fedora_packages/fedora-$RELEASEVER-$ARCH/" \
+    --repofrompath="nabu_local,file:///opt/nabu-rpms" \
     --nogpgcheck \
     --setopt=install_weak_deps=False \
     --exclude dracut-config-rescue \
@@ -142,7 +163,7 @@ dnf install -y --releasever=$RELEASEVER \
 
 echo 'Installing core...'
 dnf install -y --releasever=$RELEASEVER \
-    --repofrompath="nabu_fedora_packages,https://download.copr.fedorainfracloud.org/results/jhuang6451/nabu_fedora_packages/fedora-$RELEASEVER-$ARCH/" \
+    --repofrompath="nabu_local,file:///opt/nabu-rpms" \
     --nogpgcheck \
     --setopt=install_weak_deps=False \
     nabu-fedora-configs-core \
@@ -154,7 +175,7 @@ dnf install -y --releasever=$RELEASEVER \
 echo 'Installing extra packages...'
 dnf install -y --releasever=$RELEASEVER \
     --repofrompath="pocketblue,https://download.copr.fedorainfracloud.org/results/onesaladleaf/pocketblue/fedora-$RELEASEVER-$ARCH/" \
-    --repofrompath="nabu_fedora_packages,https://download.copr.fedorainfracloud.org/results/jhuang6451/nabu_fedora_packages/fedora-$RELEASEVER-$ARCH/" \
+    --repofrompath="nabu_local,file:///opt/nabu-rpms" \
     --nogpgcheck \
     --setopt=install_weak_deps=False \
     NetworkManager-tui \
@@ -167,7 +188,14 @@ dnf install -y --releasever=$RELEASEVER \
 # --- 配置 Copr ---
 # ==========================================================================
 echo "Configuring Copr repositories..."
-dnf copr enable -y jhuang6451/nabu_fedora_packages
+# nabu 相关包改为本地 repo (jhuang6451/nabu_fedora_packages 的 Fedora 44 为空)
+mkdir -p /etc/yum.repos.d
+printf '%s\n' \
+    '[nabu-local]' \
+    'name=nabu-local' \
+    'baseurl=file:///opt/nabu-rpms' \
+    'enabled=1' \
+    'gpgcheck=0' > /etc/yum.repos.d/nabu-local.repo
 dnf copr enable -y pocketblue/common
 dnf copr enable -y jhuang6451/nerd-fonts
 dnf copr enable -y jhuang6451/helium-browser
@@ -177,7 +205,7 @@ dnf copr enable -y jhuang6451/helium-browser
 # ==========================================================================
 echo "Installing kernel package to trigger UKI generation..."
 dnf install -y --releasever=$RELEASEVER \
-    --repofrompath="nabu_fedora_packages,https://download.copr.fedorainfracloud.org/results/jhuang6451/nabu_fedora_packages/fedora-$RELEASEVER-$ARCH/" \
+    --repofrompath="nabu_local,file:///opt/nabu-rpms" \
     --nogpgcheck \
     --setopt=install_weak_deps=False \
     kernel-sm8150
@@ -196,7 +224,7 @@ fi
 # ==========================================================================
 echo 'Installing dualboot efi...'
 dnf install -y --releasever=$RELEASEVER \
-    --repofrompath="nabu_fedora_packages,https://download.copr.fedorainfracloud.org/results/jhuang6451/nabu_fedora_packages/fedora-$RELEASEVER-$ARCH/" \
+    --repofrompath="nabu_local,file:///opt/nabu-rpms" \
     --nogpgcheck \
     --setopt=install_weak_deps=False \
     nabu-fedora-dualboot-efi
