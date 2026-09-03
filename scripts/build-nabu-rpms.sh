@@ -60,8 +60,14 @@ for pkg in "$@"; do
         exit 1
     fi
 
-    echo "==> [${pkg}] 下载 Source 文件 ..."
-    (cd "$spec_dir" && spectool -g -C "$RPMBUILD_DIR/SOURCES" "$pkg.spec")
+    # 若 spec 定义了 Source (有需下载的 URL) 才用 spectool 下载;
+    # 无 Source 的 spec (如 kernel-sm8150 直接在 %prep 里 git clone) 跳过。
+    if grep -qE '^Source[0-9]*:' "$spec_file"; then
+        echo "==> [${pkg}] 下载 Source 文件 ..."
+        (cd "$spec_dir" && spectool -g -C "$RPMBUILD_DIR/SOURCES" "$pkg.spec")
+    else
+        echo "==> [${pkg}] spec 无 Source 定义, 跳过 spectool (源码由 %prep 获取)"
+    fi
 
     echo "==> [${pkg}] rpmbuild -ba ..."
     (cd "$spec_dir" && rpmbuild -ba \
